@@ -1,8 +1,12 @@
 %% Automated segmentation of DNA from ilastik segmentation
 % moritz.kirschmann@zmb.uzh.ch 2015
+% modified by pamela.dobay@kispi.uzh.ch for staged runs, troubleshooting 2017
 
 close all force;
 clear all;
+
+% create log file
+log = fopen(strcat(outputpath,'log.txt'),'wt');
 
 verbose=1;
 writeSegmentationResults=1;
@@ -35,16 +39,13 @@ for go=1 : numel(folders)
     folders(go).name
     % Check if folder contains images
     if ((folders(go).isdir) & (~strcmp(folders(go).name, '.')) & (~strcmp(folders(go).name, '..')))
-        
         FilePath=strcat(inputpath, folders(go).name);
         FilesInFolder = dir(FilePath);
-        % FinalImage=TIFFStack(FileTif);
+       	fprintf(log, 'Folder with ', numel(FilesInFolder),' images detected...\n' );
         
         % Counting number of slices in folder
         numFrames=0;
         for file=1 : numel(FilesInFolder)
-            %folders(go).name
-            %slice
             ImagePath=strcat(FilePath, filesep ,FilesInFolder(file).name);
             [pathstr,name,ext] = fileparts(ImagePath);
             if  strcmpi(ext,suff)
@@ -58,10 +59,12 @@ for go=1 : numel(folders)
         
         numFrames
         slPerCH= numFrames/channels;
+        fprintf(log, 'Checking init params: round(nImage): ', round(nImage), '; round(mImage): ', round(mImage), '; slPerCH: ', slPerCH, '; channels: ', channels, '; inputBitDepth: ', inputBitdepth,'\n' );
         ch=zeros(round(nImage), round(mImage), slPerCH, channels, inputBitdepth);
         
         %% starting read in
         'starting read in'
+        fprintf(log, 'starting read in\n');
         for slice=1 : numel(FilesInFolder)
             
             slicePath=strcat(FilePath, filesep ,FilesInFolder(slice).name);
@@ -523,6 +526,8 @@ for go=1 : numel(folders)
     end
 end
 
+fprintf(log, 'Normal run termination.\n' );
+fclose(log);
 
 %% Writing textfile
 %     fprintf(fid, '%s\t', 'area in pixels which was considered for counting');
