@@ -7,7 +7,6 @@ clear all;
 
 % create log file
 log = fopen(strcat(outputpath,'log.txt'),'wt');
-
 verbose=1;
 writeSegmentationResults=1;
 
@@ -59,8 +58,11 @@ for go=1 : numel(folders)
         
         numFrames
         slPerCH= numFrames/channels;
-        fprintf(log, 'Checking init params: round(nImage): ', round(nImage), '; round(mImage): ', round(mImage), '; slPerCH: ', slPerCH, '; channels: ', channels, '; inputBitDepth: ', inputBitdepth,'\n' );
+        fprintf(log, 'Checking init params: round(nImage): ', round(nImage), 
+        	'; round(mImage): ', round(mImage), '; slPerCH: ', slPerCH, '; channels: ', 
+        	channels, '; inputBitDepth: ', inputBitdepth,'\n' );
         ch=zeros(round(nImage), round(mImage), slPerCH, channels, inputBitdepth);
+        save(strcat(outputpath,'workspace.mat'))
         
         %% starting read in
         'starting read in'
@@ -85,6 +87,7 @@ for go=1 : numel(folders)
                 ch(:,:,z+1,c+1)=imread(slicePath);
             end
         end
+        save(strcat(outputpath,'workspace.mat'))
         
         %% show original data
                 if verbose == 1
@@ -106,11 +109,13 @@ for go=1 : numel(folders)
                 end
         
         %% Gaussian blurring the first two channels
+        fprintf(log, 'Gaussian blurring...\n');
         h = fspecial('gaussian', 7, sigmaOfGaussianBlur(1));
         ch(:,:,:,CellsInCH) = imfilter(ch(:,:,:,CellsInCH), h);
         
         h = fspecial('gaussian', 7, sigmaOfGaussianBlur(2));
         ch(:,:,:,BlVesInCH) = imfilter(ch(:,:,:,BlVesInCH), h);
+        save(strcat(outputpath,'workspace.mat'))
         
         if DepthCorrectionBlVes==1
             for ii = 1 : slPerCH
@@ -154,18 +159,21 @@ for go=1 : numel(folders)
             
             ch(:,:,:,CellsInCH)=DCCells;
         end
+        save(strcat(outputpath,'workspace.mat'))
         
         %% thresholding
-        
+        fprintf(log, 'Thresholding...\n');
         seg(:,:,:,CellsInCH) = ch(:,:,:,CellsInCH) >= threshold(1);
         seg(:,:,:,BlVesInCH) = ch(:,:,:,BlVesInCH) >= threshold(2);
         
         
         %% finding connected components
+        fprintf(log, 'Finding connected components...\n');
         CCCells = bwconncomp(seg(:,:,:,CellsInCH), 18);        
         CCBlVes = bwconncomp(seg(:,:,:,BlVesInCH), 18);
         
         %% finding number of voxels per connected component to filter out small objects
+        fprintf(log, 'Filtering out small objects...\n');
         CCCells_props = regionprops(CCCells, 'Area');
         idx = find([CCCells_props.Area] > minimalSegmentSize(1));
         filteredseg1 = ismember(labelmatrix(CCCells), idx);
@@ -173,6 +181,7 @@ for go=1 : numel(folders)
         CCBlVes_props = regionprops(CCBlVes, 'Area');
         idx = find([CCBlVes_props.Area] > minimalSegmentSize(2));
         filteredseg2 = ismember(labelmatrix(CCBlVes), idx);
+        save(strcat(outputpath,'workspace.mat'))
         
         %% Show sizefiltered CC
         if verbose == 1
@@ -190,14 +199,15 @@ for go=1 : numel(folders)
         
         
         %% finding connected components of the remaining segments AND finding Centers
+        fprintf(log, 'Filtering connected components (2), object centers...\n');
         CC1 = bwconncomp(filteredseg1, 18);
         %%%%%%%%%%%%%%
         CCCells = bwconncomp(filteredseg1(:,:,:), 18);
         
-        
+        fprintf(log, 'Filtering out small objects (2)...\n');
         %% finding number of voxels per connected component to filter out small objects
         CCCells_props = regionprops(CCCells, 'Area');
-        
+        save(strcat(outputpath,'workspace.mat'))
         
         
         %%%%%%%%%%%%%%
@@ -233,8 +243,9 @@ for go=1 : numel(folders)
                 pause(.1);
             end
         end
+        save(strcat(outputpath,'workspace.mat'))
         
-        
+        fprintf(log, 'Writing segmentation results...\n');
         if writeSegmentationResults == 1
             
             
@@ -262,6 +273,7 @@ for go=1 : numel(folders)
             end
             
         end
+        save(strcat(outputpath,'workspace.mat'))
                 
         'Postfilter'
         CC1.NumObjects
@@ -274,20 +286,22 @@ for go=1 : numel(folders)
         
         %% Finding shortest distance of Channel 1 objects to Channel 2 objects
         tic;
+        fprintf(log, 'Getting distances of objects bet channels...\n');
         d=bwdistsc(CC2maskBin, pixelsize);
         mindistances=dist2NearNeighbFastDistMap(CC1, d);
         folders(go).mindists=mindistances
         
         toc
+        save(strcat(outputpath,'workspace.mat'))
         
         %% Calculating Distances of randomly distributed Balls in the Cells Channels
-        
-        
+        fprintf(log, 'Getting distances of random objects in cell channels...\n');
+
         % To only consider areas within tissue a mask is created by finding
         % all foreground in both channels and imclose this mask to fill all
         % the gaps
         allMask=or(CC1mask>0,CC2mask>0);
-        
+        save(strcat(outputpath,'workspace.mat'))
         
         hd = fspecial('disk', round(dilRadiusTissue/pixelsize(1))) >0;
         he = fspecial('disk', round(dilRadiusTissue/pixelsize(1)/2)) >0;
@@ -299,6 +313,7 @@ for go=1 : numel(folders)
             tissueMask(:,:,ii) = imdilate(allMask(:,:,ii), hd);
             tissueMask(:,:,ii) = imerode(tissueMask(:,:,ii), he);
         end
+        save(strcat(outputpath,'workspace.mat'))
         
         
         FilledBleVS =(CC2mask>0);
@@ -308,6 +323,7 @@ for go=1 : numel(folders)
             FilledBlVesMask(:,:,ii) = imclose(FilledBleVS(:,:,ii), h);
             
         end
+        save(strcat(outputpath,'workspace.mat'))
         
         toc
         
@@ -349,12 +365,16 @@ for go=1 : numel(folders)
             end
             
         end
+        save(strcat(outputpath,'workspace.mat'))
         
         %% Randomly distributed cells within tissue
+        fprintf(log, 'Getting distances of random objects w/in tissue...\n');
         nRandomCells=CC1.NumObjects;
         RandomCellsInTissue = nan(3,nRandomCells);
         RandomCellsInTissueMask=zeros(nImage,mImage,slPerCH, 'uint16');
         RCITMlin=CCCells;
+        fprintf(log, 'Looping over ',  nRandomCells, ' random cells\n');
+        
         for  j=1 : nRandomCells
             while 1
                 r=random('unif',0,1,3,1);
@@ -384,8 +404,9 @@ for go=1 : numel(folders)
                     
                 end
             end
-            
         end
+        save(strcat(outputpath,'workspace.mat'))
+        
         if verbose == 1
             %colormap(myMap);
         
@@ -413,13 +434,16 @@ for go=1 : numel(folders)
         mindistancesRandomInTissue=dist2NearNeighbFastDistMap(RCITMlin, d);
         folders(go).mindistsRCITM=mindistancesRandomInTissue;
         toc
-        
+        save(strcat(outputpath,'workspace.mat'))
         
         %% Randomly distributed cells within tissue not inside BlVes
+        fprintf(log, 'Getting distances of random objects w/in tissue outside BlVes...\n');
         nRandomCells=CC1.NumObjects;
         RandomCellsInTissueWithoutBlVes = nan(3,nRandomCells);
         RandomCellsInTissueWithoutBlVesMask=zeros(nImage,mImage,slPerCH, 'uint16');
         RCITMWBlin=CCCells;
+        fprintf(log, 'Looping over ',  nRandomCells, ' random cells\n');
+        
         for  j=1 : nRandomCells
             while 1
                 r=random('unif',0,1,3,1);
@@ -466,7 +490,7 @@ for go=1 : numel(folders)
             end
         end
         %% Finding shortest distance of Randomized Cells to
-        
+        save(strcat(outputpath,'workspace.mat'))
         
         tic;
         
