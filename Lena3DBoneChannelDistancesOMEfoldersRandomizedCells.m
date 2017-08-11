@@ -9,9 +9,6 @@ writeSegmentationResults=1;
 
 %% Loading raw data from single channel images
 channels = 3;
-%inputpath = 'L:\3651._-_3651_Merging001_Merged001\';
-%inputpath= 'L:\3651._-_3651_Merging001_Merged001\'
-%inputpath = 'L:\3651._-_3651_Merging001_Merged001\';
 inputpath = 'L:\img1\';
 outputpath = 'L:\img1\3651._-_3651_Merging001_Merged001\output\';
 inputBitdepth = 'uint16';
@@ -26,22 +23,11 @@ minimalSegmentSize= [500, 420, 350];  %First Cells, second BlVes
 
 pixelsize= [0.4541, 0.4541, 1.4995]; % x y z in microns
 
-%threshold= [18, 160, 150];     %per channel
-%minimalSegmentSize= [350, 420, 100000];  %per channel
-%sigmaOfGaussianBlur = [2.0, 1.0, 1.0]
-
-%pixelsize=1.0;  %in nm
-%smallBranchThreshold= 40;
-%lengthThresholdInNm = 800;
-%outputpath = 'D:\Vale\output\';
-
 suff= '.tif' % Suffix of image files
 folders = dir(inputpath)
 
 myMap = rand(10000, 3); %Generating random color map
 myMap(1,:)= [0,0,0] ;
-%parcounts=zeros(4, numel(files));
-% %pararea=zeros(numel(files),1)
 
 %Iterate over Folders
 for go=1 : numel(folders)   
@@ -166,34 +152,6 @@ for go=1 : numel(folders)
             ch(:,:,:,CellsInCH)=DCCells;
         end
         
-        
-        
-        
-        
-        
-        %% Show blurred results
-        %         if verbose == 1
-        %             for ii = 1 : slPerCH
-        %
-        %                 imagesc(ch(:,:,ii,1));
-        %                 pause(.01);
-        %             end
-        %             for ii = 1 : slPerCH
-        %
-        %                 imagesc(ch(:,:,ii,2));
-        %                 pause(.01);
-        %             end
-        %             for ii = 1 : slPerCH
-        %
-        %                 imagesc(ch(:,:,ii,3));
-        %                 pause(.01);
-        %             end
-        %         end
-        
-        %     h = fspecial('gaussian', 7, sigmaOfGaussianBlur(3));
-        %     ch3 = imfilter(ch3,h);
-        
-        
         %% thresholding
         
         seg(:,:,:,CellsInCH) = ch(:,:,:,CellsInCH) >= threshold(1);
@@ -201,19 +159,8 @@ for go=1 : numel(folders)
         
         
         %% finding connected components
-        CCCells = bwconncomp(seg(:,:,:,CellsInCH), 18);
-        
+        CCCells = bwconncomp(seg(:,:,:,CellsInCH), 18);        
         CCBlVes = bwconncomp(seg(:,:,:,BlVesInCH), 18);
-        
-        
-        %%Filter by total length
-        
-        %CC1props= regionprops(CC1);
-        % CC1_unfiltered =CC;
-        
-        %     filteredseg1=CC1;
-        %     filteredseg2=CC2;
-        %     filteredseg3=CC3;
         
         %% finding number of voxels per connected component to filter out small objects
         CCCells_props = regionprops(CCCells, 'Area');
@@ -239,36 +186,11 @@ for go=1 : numel(folders)
         end
         
         
-        %% Morphological filtering
-        %     SE=ones(3,3,3);
-        %     seg1op=imclose(filteredseg1,SE);
-        %
-        %     if verbose == 1
-        %         for ii = 1 : slPerCH
-        %
-        %             imagesc(seg1op(:,:,ii)+filteredseg1(:,:,ii));
-        %             pause(.8);
-        %         end
-        %     end
-        
-        
-        
         %% finding connected components of the remaining segments AND finding Centers
         CC1 = bwconncomp(filteredseg1, 18);
         %%%%%%%%%%%%%%
         CCCells = bwconncomp(filteredseg1(:,:,:), 18);
         
-        
-        
-        
-        %%Filter by total length
-        
-        %CC1props= regionprops(CC1);
-        % CC1_unfiltered =CC;
-        
-        %     filteredseg1=CC1;
-        %     filteredseg2=CC2;
-        %     filteredseg3=CC3;
         
         %% finding number of voxels per connected component to filter out small objects
         CCCells_props = regionprops(CCCells, 'Area');
@@ -294,29 +216,7 @@ for go=1 : numel(folders)
             CC2mask(pixlist) = i;
         end
         CC2maskBin=CC2mask>0;
-        %% Save
-        
-        
-        % Define the two colormaps.
-        %     cmap1 = hot(255)
-        %     cmap2 = winter(255)
-        %     % Combine them into one tall colormap.
-        %     combinedColorMap = [cmap1; cmap2]
-        %     % Pick 15 rows at random.
-        %     randomRows = randi(size(combinedColorMap, 1), [255, 1])
-        %     % Extract the rows from the combined color map.
-        %     randomColors = combinedColorMap(randomRows, :)
-        %
-        % colortable= winter;
-        %colortable(:) = randperm(colortable(:));
-        % a= colortable(:);
-        % b=randperm(a,CC1.NumObjects);
-        
-        
-        %   colortable(:)
-        % colormap summer;
-        
-        
+        %% Save        
         
         if verbose == 1
             colormap(myMap);
@@ -359,33 +259,7 @@ for go=1 : numel(folders)
             end
             
         end
-        
-        
-        
-        
-        %             imwrite(CC1mask(:,:,1), strcat(outputpath, folders(go).name, '_segCells.tif'));
-        %             for ii = 2 : slPerCH
-        %                 imwrite(CC1mask(:,:,ii), strcat(outputpath, folders(go).name, '_segCells.tif') ,'WriteMode','append');
-        %             end
-        %
-        %             imwrite(CC2mask(:,:,1), strcat(outputpath, folders(go).name, '_segBV.tif'));
-        %             for ii = 2 : slPerCH
-        %                 imwrite(CC2mask(:,:,ii), strcat(outputpath, folders(go).name, '_segBV.tif') ,'WriteMode','append');
-        %             end
-        %
-        %             imwrite(ch(:,:,1,CellsInCH), strcat(outputpath, folders(go).name, '_Cells_pre_thres.tif'));
-        %             for ii = 2 : slPerCH
-        %                 imwrite(ch(:,:,ii, CellsInCH), strcat(outputpath, folders(go).name, '_Cells_pre_thres.tif') ,'WriteMode','append');
-        %             end
-        %
-        %
-        %             imwrite(ch(:,:,1,BlVesInCH), strcat(outputpath, folders(go).name, '_BlVes_pre_thres.tif'));
-        %             for ii = 2 : slPerCH
-        %                 imwrite(ch(:,:,ii, BlVesInCH), strcat(outputpath, folders(go).name, '_BlVes_pre_thres.tif') ,'WriteMode','append');
-        %             end
-        %
-        %
-        
+                
         'Postfilter'
         CC1.NumObjects
         CC2.NumObjects
@@ -458,10 +332,6 @@ for go=1 : numel(folders)
                 imagesc(uint8(tissueWithoutFilledBlVes(:,:,ii)));
                 pause(.2);
             end
-            %             for ii = 1 : slPerCH
-            %                 imagesc(uint8(FilledBlVesMask(:,:,ii)));
-            %                 pause(.3);
-            %             end
         end
         if writeSegmentationResults == 1
             
@@ -483,11 +353,6 @@ for go=1 : numel(folders)
         RandomCellsInTissueMask=zeros(nImage,mImage,slPerCH, 'uint16');
         RCITMlin=CCCells;
         for  j=1 : nRandomCells
-            %VolOfCellInPixels=CCCells_props(j).Area;
-            %VolOfCellInMicrons=pixelsize(1)*pixelsize(2)*pixelsize(3)*VolOfCellInPixels;
-            %             radiusOfCellInMicrons=VolOfCellInMicrons^(1/3)
-            %             round(radiusOfCellInMicrons/pixelsize(1))
-            %             round(radiusOfCellInMicrons/pixelsize(3))
             while 1
                 r=random('unif',0,1,3,1);
                 
@@ -520,12 +385,7 @@ for go=1 : numel(folders)
         end
         if verbose == 1
             %colormap(myMap);
-            
-            %             for ii = 1 : slPerCH
-            %                 ii
-            %                 imagesc(uint8(tissueMask(:,:,ii))+uint8(allMask(:,:,ii))+uint8(FilledBlVesMask(:,:,ii))+uint8(ch(:,:,ii,BlVesInCH)));
-            %                 pause(.2);
-            %             end
+        
             for ii = 1 : slPerCH
                 %ii
                 imagesc(uint8(RandomCellsInTissueMask(:,:,ii))+uint8(tissueMask(:,:,ii))+uint8(CC1mask(:,:,ii)));
@@ -536,10 +396,7 @@ for go=1 : numel(folders)
                 imagesc(uint8(RandomCellsInTissueMask(:,:,ii))+uint8(tissueMask(:,:,ii)));
                 pause(.2);
             end
-            %             for ii = 1 : slPerCH
-            %                 imagesc(uint8(FilledBlVesMask(:,:,ii)));
-            %                 pause(.3);
-            %             end
+
         end
         if writeSegmentationResults == 1
             imwrite(uint16(RandomCellsInTissueMask(:,:,1)), strcat(outputpath, folders(go).name, '_RandomCellsInTissue.tif'));
@@ -547,17 +404,12 @@ for go=1 : numel(folders)
                 imwrite(uint16(RandomCellsInTissueMask(:,:,ii)), strcat(outputpath, folders(go).name, '_RandomCellsInTissue.tif') ,'WriteMode','append');
             end
         end
-        %% Finding shortest distance of Randomized Cells to
-        
-        
+                
         tic;
         
         mindistancesRandomInTissue=dist2NearNeighbFastDistMap(RCITMlin, d);
         folders(go).mindistsRCITM=mindistancesRandomInTissue;
-        
         toc
-        
-        
         
         
         %% Randomly distributed cells within tissue not inside BlVes
@@ -566,16 +418,10 @@ for go=1 : numel(folders)
         RandomCellsInTissueWithoutBlVesMask=zeros(nImage,mImage,slPerCH, 'uint16');
         RCITMWBlin=CCCells;
         for  j=1 : nRandomCells
-            %VolOfCellInPixels=CCCells_props(j).Area;
-            %VolOfCellInMicrons=pixelsize(1)*pixelsize(2)*pixelsize(3)*VolOfCellInPixels;
-            %             radiusOfCellInMicrons=VolOfCellInMicrons^(1/3)
-            %             round(radiusOfCellInMicrons/pixelsize(1))
-            %             round(radiusOfCellInMicrons/pixelsize(3))
             while 1
                 r=random('unif',0,1,3,1);
                 
                 RandomCellCoords = (floor((r.').*[nImage, mImage,slPerCH])+[1,1,1]);
-                %tissueMask(RandomCellCoords(1),RandomCellCoords(2), RandomCellCoords(3));
                 if tissueWithoutFilledBlVes(RandomCellCoords(1),RandomCellCoords(2), RandomCellCoords(3))
                     j
                     RandomCellCoords(:)
@@ -588,16 +434,10 @@ for go=1 : numel(folders)
                     Cellmask=circshift(Cellmask, -round(CellCenters(j).Centroid(1))+RandomCellCoords(2), 2 );
                     Cellmask=circshift(Cellmask, -round(CellCenters(j).Centroid(2))+RandomCellCoords(1), 1 );
                     Cellmask=circshift(Cellmask, -round(CellCenters(j).Centroid(3))+RandomCellCoords(3), 3 );
-                    %                     Cellmask=circshift(Cellmask, -round(CellCenters(j).Centroid(1)), 2 );
-                    %                     Cellmask=circshift(Cellmask, -round(CellCenters(j).Centroid(2)), 1 );
-                    %                     Cellmask=circshift(Cellmask, -round(CellCenters(j).Centroid(3)), 3 );
-                    %Cellmask(RandomCellCoords(1),RandomCellCoords(2),RandomCellCoords(3))=j*2-1;
-                    % end
                     
                     RCITMWBlin.PixelIdxList{j}=find(Cellmask>0);
                     RandomCellsInTissueWithoutBlVesMask=RandomCellsInTissueWithoutBlVesMask+Cellmask;
                     
-                    %RandomCellsInTissueWithoutBlVesMask=RandomCellsInTissueWithoutBlVesMask+Cellmask;
                     break
                     
                 end
@@ -605,27 +445,14 @@ for go=1 : numel(folders)
             
         end
         if verbose == 1
-            %colormap(myMap);
-            
-            %             for ii = 1 : slPerCH
-            %                 ii
-            %                 imagesc(uint8(tissueMask(:,:,ii))+uint8(allMask(:,:,ii))+uint8(FilledBlVesMask(:,:,ii))+uint8(ch(:,:,ii,BlVesInCH)));
-            %                 pause(.2);
-            %             end
             for ii = 1 : slPerCH
-                %ii
                 imagesc(uint8(RandomCellsInTissueWithoutBlVesMask(:,:,ii))+uint8(tissueWithoutFilledBlVes(:,:,ii))+uint8(CC1mask(:,:,ii)));
                 pause(.2);
             end
             for ii = 1 : slPerCH
-                %ii
                 imagesc(uint8(RandomCellsInTissueWithoutBlVesMask(:,:,ii))+uint8(tissueWithoutFilledBlVes(:,:,ii))+uint8(tissueMask(:,:,ii)));
                 pause(.2);
             end
-            %             for ii = 1 : slPerCH
-            %                 imagesc(uint8(FilledBlVesMask(:,:,ii)));
-            %                 pause(.3);
-            %             end
         end
         
         if writeSegmentationResults == 1
@@ -644,42 +471,10 @@ for go=1 : numel(folders)
         folders(go).mindistsRCITMWBl=mindistancesRandomInTissueWithoutBlVes;
         %hist(folders(go).mindistsRCITMWBl);
         toc
-        
-        %         RandomCellsInTissueWithoutBlVesMask = nan(3,nRandomCells);
-        %
-        %         for  j=1 : nRandomCells
-        %             VolOfCellInPixels=CCCells_props(j).Area;
-        %             VolOfCellInMicrons=pixelsize(1)*pixelsize(2)*pixelsize(3)*VolOfCellInPixels;
-        %             radiusOfCellInMicrons=VolOfCellInMicrons^(1/3)
-        %             round(radiusOfCellInMicrons/pixelsize(1))
-        %             round(radiusOfCellInMicrons/pixelsize(3))
-        %             while 1
-        %                 r=random('unif',0,1,3,1);
-        %
-        %                 RandomCellCoords = (floor((r.').*[nImage, mImage,slPerCH])+[1,1,1]);
-        %                 %tissueMask(RandomCellCoords(1),RandomCellCoords(2), RandomCellCoords(3));
-        %                 if tissueWithoutFilledBlVes(RandomCellCoords(1),RandomCellCoords(2), RandomCellCoords(3))
-        %                     RandomCellsInTissueWithoutBlVes(:,j)=[RandomCellCoords(1),RandomCellCoords(2), RandomCellCoords(3)];
-        %                     break
-        %
-        %                 end
-        %             end
-        %
-        %         end
-        %
-        %         %RandomCellCoords = random('Uniform',nImage,mImage,slPerCH)
-        %         %artCells =
-        %         dafsdf
-        
-        
-        
+                
         %% Writing  results
         ' Writing  results'
         fid = fopen(strcat(outputpath,'Matlab_results_', folders(go).name,'.txt'),'wt');
-        % fprintf(fid, '%s\t', 'red', 'pink', 'white', 'total');
-        % fprintf(fid, '\n' );
-        
-        
         
         % if ((folders(go).isdir) & (~strcmp(folders(go).name, '.')) & (~strcmp(folders(go).name, '..')))
         fprintf(fid, '%s\t', folders(go).name);
@@ -730,9 +525,6 @@ end
 
 
 %% Writing textfile
-
-
-
 %     fprintf(fid, '%s\t', 'area in pixels which was considered for counting');
 %     fprintf(fid, '\n' );
 %     fprintf(fid, '%u\t', pararea(i));
