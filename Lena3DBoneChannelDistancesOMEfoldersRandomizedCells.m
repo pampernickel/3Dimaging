@@ -5,8 +5,6 @@
 close all force;
 clear all;
 
-% create log file
-log = fopen(strcat(outputpath,'log.txt'),'wt');
 verbose=1;
 writeSegmentationResults=1;
 
@@ -31,6 +29,9 @@ folders = dir(inputpath)
 
 myMap = rand(10000, 3); %Generating random color map
 myMap(1,:)= [0,0,0] ;
+
+% create log file
+log = fopen(strcat(outputpath,'log.txt'),'wt');
 
 %Iterate over Folders
 for go=1 : numel(folders)   
@@ -58,9 +59,7 @@ for go=1 : numel(folders)
         
         numFrames
         slPerCH= numFrames/channels;
-        fprintf(log, 'Checking init params: round(nImage): ', round(nImage), 
-        	'; round(mImage): ', round(mImage), '; slPerCH: ', slPerCH, '; channels: ', 
-        	channels, '; inputBitDepth: ', inputBitdepth,'\n' );
+        fprintf(log, 'Checking init params: round(nImage): ', round(nImage), '; round(mImage): ', round(mImage), '; slPerCH: ', slPerCH, '; channels: ', channels, '; inputBitDepth: ', inputBitdepth,'\n' );
         ch=zeros(round(nImage), round(mImage), slPerCH, channels, inputBitdepth);
         save(strcat(outputpath,'workspace.mat'))
         
